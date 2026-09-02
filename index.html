@@ -1,0 +1,473 @@
+<title>Pico Cívico</title>
+<meta name="description" content="Mapa interativo de indicadores e governação da ilha do Pico — freguesia a freguesia, ligando decisões a resultados.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#e9edec; --panel:#f6f8f7; --card:#ffffff;
+    --ink:#161f1d; --ink-2:#4c5a56; --ink-3:#7c8a85;
+    --line:#d3dbd8; --line-2:#e2e8e6;
+    --sea:#0e6e80; --sea-2:#0a5462; --sea-soft:#cfe4e7;
+    --lava:#b9702e;
+    --good:#2f8a63; --warn:#b8892b; --bad:#b0473a;
+    --mad:#2b8a9e; --roq:#5f9060; --laj:#c0862f;
+    --shadow:0 1px 2px rgba(20,31,29,.06), 0 8px 24px -12px rgba(20,31,29,.18);
+    --serif:'Newsreader',Georgia,'Times New Roman',serif;
+    --sans:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme:dark){
+      --ground:#0f1417; --panel:#151d21; --card:#1a2429;
+      --ink:#e7edeb; --ink-2:#9fadaa; --ink-3:#71807c;
+      --line:#293539; --line-2:#212c31;
+      --sea:#4bb4c6; --sea-2:#6fc7d6; --sea-soft:#123138;
+      --lava:#d68b45;
+      --good:#54b487; --warn:#d6ab54; --bad:#d4685a;
+      --mad:#3fb0c6; --roq:#7bb37c; --laj:#d8a44e;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0f1417; --panel:#151d21; --card:#1a2429;
+    --ink:#e7edeb; --ink-2:#9fadaa; --ink-3:#71807c;
+    --line:#293539; --line-2:#212c31;
+    --sea:#4bb4c6; --sea-2:#6fc7d6; --sea-soft:#123138;
+    --lava:#d68b45;
+    --good:#54b487; --warn:#d6ab54; --bad:#d4685a;
+    --mad:#3fb0c6; --roq:#7bb37c; --laj:#d8a44e;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{margin:0}
+  button{font:inherit;cursor:pointer}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  /* ---------- shell ---------- */
+  .wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+  header.top{border-bottom:1px solid var(--line);background:var(--ground);
+    position:sticky;top:0;z-index:20}
+  .top .wrap{display:flex;align-items:center;gap:18px;padding-top:14px;padding-bottom:14px;flex-wrap:wrap}
+  .brand{display:flex;flex-direction:column;line-height:1;margin-right:auto}
+  .brand .name{font-family:var(--serif);font-size:1.55rem;font-weight:600;letter-spacing:-.01em}
+  .brand .name b{color:var(--sea);font-weight:600}
+  .brand .tag{font-size:.72rem;color:var(--ink-2);margin-top:5px;letter-spacing:.01em}
+  .proto{font-family:var(--mono);font-size:.62rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--lava);border:1px solid color-mix(in srgb,var(--lava) 40%,transparent);
+    padding:4px 8px;border-radius:999px;white-space:nowrap}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .seg button{border:0;background:none;color:var(--ink-2);padding:6px 14px;border-radius:999px;
+    font-size:.8rem;font-weight:600;letter-spacing:.01em}
+  .seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+  .theme{border:1px solid var(--line);background:var(--panel);color:var(--ink-2);width:38px;height:38px;
+    border-radius:10px;display:grid;place-items:center;font-size:1rem}
+
+  /* ---------- main grid ---------- */
+  main{padding:22px 0 40px}
+  .grid{display:grid;grid-template-columns:1.15fr .95fr;gap:22px;align-items:start}
+  @media (max-width:880px){.grid{grid-template-columns:1fr}}
+
+  /* map */
+  .mapcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 16px 12px;
+    position:sticky;top:86px}
+  @media (max-width:880px){.mapcard{position:static}}
+  .maphead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .maphead h2{font-family:var(--serif);font-size:1.15rem;font-weight:500}
+  .maphead .hint{font-size:.72rem;color:var(--ink-3)}
+  svg.map{width:100%;height:auto;display:block;touch-action:manipulation}
+  .zone{cursor:pointer;transition:opacity .18s, filter .18s}
+  .zone:hover{filter:brightness(1.06)}
+  .isle-line{fill:none;stroke:var(--ink);stroke-width:1.4;opacity:.5;stroke-linejoin:round}
+  .seam{fill:none;stroke:var(--ground);stroke-width:2.4;opacity:.9}
+  .peak{fill:var(--ink);opacity:.55}
+  .fpin{cursor:pointer}
+  .fpin circle{stroke:var(--ground);stroke-width:1.5;transition:r .15s}
+  .fpin:hover circle,.fpin.sel circle{r:7}
+  .flabel{font-family:var(--sans);font-size:9.5px;font-weight:600;fill:var(--ink);
+    paint-order:stroke;stroke:var(--ground);stroke-width:2.6px;pointer-events:none;opacity:0;transition:opacity .15s}
+  .fpin:hover .flabel,.fpin.sel .flabel{opacity:1}
+  .zlabel{font-family:var(--serif);font-weight:600;font-size:15px;fill:var(--ground);pointer-events:none;
+    letter-spacing:.02em}
+  .dimmed .zone{opacity:.32}
+  .dimmed .fpin{opacity:.28}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;padding-top:11px;border-top:1px solid var(--line-2)}
+  .legend span{display:inline-flex;align-items:center;gap:7px;font-size:.75rem;color:var(--ink-2);font-weight:500}
+  .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .isle-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-2)}
+  .isle-sum div{display:flex;flex-direction:column;gap:3px}
+  .isle-sum .k{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .isle-sum .v{font-size:1.05rem;font-weight:500}
+  .isle-sum .v small{font-size:.64rem;color:var(--ink-3);font-weight:400}
+  .thesis{font-family:var(--serif);font-style:italic;font-size:.92rem;color:var(--ink-2);line-height:1.4;margin-top:12px}
+
+  /* panel */
+  .panel{min-height:200px}
+  .eyebrow{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--sea);display:flex;align-items:center;gap:8px}
+  .eyebrow .swatch{width:10px;height:10px;border-radius:3px}
+  .p-name{font-family:var(--serif);font-size:2.2rem;font-weight:600;letter-spacing:-.015em;line-height:1.04;
+    margin:8px 0 2px;text-wrap:balance}
+  .trace{font-family:var(--serif);font-style:italic;font-size:1.02rem;color:var(--ink-2);line-height:1.4;
+    max-width:52ch;margin-bottom:18px}
+
+  .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line-2);
+    border:1px solid var(--line-2);border-radius:12px;overflow:hidden;margin-bottom:16px}
+  .fact{background:var(--card);padding:13px 14px}
+  .fact .k{font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  .fact .v{font-family:var(--mono);font-size:1.32rem;font-weight:500;margin-top:5px;letter-spacing:-.01em}
+  .fact .v small{font-size:.7rem;color:var(--ink-3);font-weight:400;margin-left:2px}
+
+  .block{margin-top:20px}
+  .block > h3{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:700;
+    display:flex;align-items:center;gap:9px;margin-bottom:12px}
+  .block > h3::after{content:"";flex:1;height:1px;background:var(--line-2)}
+
+  .gov{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow)}
+  .gov .role{font-size:.74rem;color:var(--ink-3);font-weight:600}
+  .gov .who{font-family:var(--serif);font-size:1.18rem;font-weight:600;margin:3px 0 9px}
+  .gov .who .tbc{color:var(--ink-3);font-style:italic;font-weight:400;font-size:.86rem}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{font-size:.72rem;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line);
+    color:var(--ink-2);background:var(--panel)}
+  .chip.party{border-color:color-mix(in srgb,var(--sea) 35%,transparent);color:var(--sea)}
+
+  .ind{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:520px){.ind{grid-template-columns:1fr}}
+  .icard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .icard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .icard .lab{font-size:.76rem;color:var(--ink-2);font-weight:600;line-height:1.25}
+  .stat{font-size:.6rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:5px;white-space:nowrap}
+  .stat.good{color:var(--good);background:color-mix(in srgb,var(--good) 13%,transparent)}
+  .stat.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 13%,transparent)}
+  .stat.bad{color:var(--bad);background:color-mix(in srgb,var(--bad) 13%,transparent)}
+  .icard .val{font-family:var(--mono);font-size:1.42rem;font-weight:500;margin-top:8px;letter-spacing:-.01em}
+  .icard .val small{font-size:.66rem;color:var(--ink-3);font-weight:400;margin-left:3px}
+  .icard .spark{display:flex;align-items:center;gap:8px;margin-top:7px}
+  .icard .delta{font-family:var(--mono);font-size:.72rem;font-weight:500}
+  .up{color:var(--good)} .down{color:var(--bad)} .flat{color:var(--ink-3)}
+
+  /* decisões -> resultados */
+  .dr{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+  .dr-row{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:14px 15px}
+  .dr-row + .dr-row{border-top:1px solid var(--line-2)}
+  .dr .dec .t{font-weight:600;font-size:.9rem;line-height:1.25}
+  .dr .dec .m{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);margin-top:4px}
+  .dr .dec .m b{color:var(--lava);font-weight:600}
+  .dr .arrow{color:var(--sea);font-size:1.1rem;display:grid;place-items:center}
+  .dr .res{text-align:right}
+  .dr .res .t{font-size:.78rem;color:var(--ink-2);font-weight:600;line-height:1.2}
+  .dr .res .sk{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:6px}
+  .dr .res .d{font-family:var(--mono);font-size:.74rem;font-weight:600}
+  @media (max-width:520px){.dr-row{grid-template-columns:1fr;text-align:left}.dr .res{text-align:left}.dr .res .sk{justify-content:flex-start}.dr .arrow{justify-self:start;transform:rotate(90deg)}}
+
+  .note{font-size:.74rem;color:var(--ink-3);line-height:1.55;margin-top:10px}
+  .soon{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:14px 15px;
+    font-size:.82rem;color:var(--ink-2)}
+  footer{border-top:1px solid var(--line);color:var(--ink-3);font-size:.74rem;line-height:1.6}
+  footer .wrap{padding:18px 20px 34px}
+  footer b{color:var(--ink-2)}
+  a{color:var(--sea)}
+  :focus-visible{outline:2px solid var(--sea);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <span class="name">Pico<b>·</b>Cívico</span>
+      <span class="tag">Indicadores, governação e decisões — freguesia a freguesia</span>
+    </div>
+    <span class="proto" title="Estrutura real; valores ainda demonstrativos">Protótipo · dados demonstrativos</span>
+    <div class="seg" role="group" aria-label="Nível do mapa">
+      <button data-level="concelho" aria-pressed="true">Concelhos</button>
+      <button data-level="freguesia" aria-pressed="false">Freguesias</button>
+    </div>
+    <button class="theme" id="themeBtn" title="Alternar tema" aria-label="Alternar tema">◐</button>
+  </div>
+</header>
+
+<main>
+  <div class="wrap grid">
+    <section class="mapcard">
+      <div class="maphead">
+        <h2>Ilha do Pico</h2>
+        <span class="hint">Toca num concelho ou freguesia</span>
+      </div>
+      <svg class="map" viewBox="0 0 1000 340" role="img" aria-label="Mapa da ilha do Pico por concelhos e freguesias">
+        <defs>
+          <clipPath id="isle">
+            <path d="M56,182 C60,140 120,112 210,104 C330,93 470,100 600,120 C720,138 840,150 928,170 L968,180 L928,192 C840,210 720,222 600,238 C470,256 330,262 210,252 C120,244 60,224 56,182 Z"/>
+          </clipPath>
+        </defs>
+
+        <g clip-path="url(#isle)">
+          <!-- concelho zones -->
+          <polygon class="zone" data-id="madalena" points="40,20 340,20 312,320 40,320" fill="var(--mad)"/>
+          <polygon class="zone" data-id="sao-roque" points="330,20 900,20 940,150 320,168" fill="var(--roq)"/>
+          <polygon class="zone" data-id="lajes" points="320,168 940,150 1000,150 1000,320 305,320" fill="var(--laj)"/>
+        </g>
+        <!-- seams + outline -->
+        <path class="seam" d="M326,60 L306,300"/>
+        <path class="seam" d="M330,170 L950,158"/>
+        <path class="isle-line" d="M56,182 C60,140 120,112 210,104 C330,93 470,100 600,120 C720,138 840,150 928,170 L968,180 L928,192 C840,210 720,222 600,238 C470,256 330,262 210,252 C120,244 60,224 56,182 Z"/>
+        <!-- Ponta do Pico (volcano) -->
+        <path class="peak" d="M232,150 l10,-20 10,20 z"/>
+
+        <!-- concelho labels -->
+        <g id="zlabels">
+          <text class="zlabel" x="150" y="188" text-anchor="middle">Madalena</text>
+          <text class="zlabel" x="560" y="86" text-anchor="middle">São Roque</text>
+          <text class="zlabel" x="560" y="300" text-anchor="middle">Lajes</text>
+        </g>
+
+        <!-- freguesia pins -->
+        <g id="pins"></g>
+      </svg>
+
+      <div class="legend">
+        <span><i style="background:var(--mad)"></i>Madalena</span>
+        <span><i style="background:var(--roq)"></i>São Roque do Pico</span>
+        <span><i style="background:var(--laj)"></i>Lajes do Pico</span>
+      </div>
+      <div class="isle-sum">
+        <div><span class="k">População da ilha</span><span class="v mono">13 895 <small>hab.</small></span></div>
+        <div><span class="k">Concelhos</span><span class="v mono">3</span></div>
+        <div><span class="k">Freguesias</span><span class="v mono">17</span></div>
+      </div>
+      <p class="thesis">Não basta mostrar números. Cruzamos <b>quem decide</b> e <b>o que investe</b> com <b>o que muda</b> — decisão a decisão.</p>
+    </section>
+
+    <section class="panel" id="panel" aria-live="polite"></section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>Pico Cívico</b> — protótipo de interface. <b>Reais e verificados:</b> a estrutura administrativa (3 concelhos, 17 freguesias), as populações
+    (Censos 2021, INE) e os presidentes de câmara eleitos nas autárquicas de outubro de 2025. <b>Ainda demonstrativos:</b> os indicadores
+    económicos/sociais e os exemplos de "decisões → resultados", a substituir por séries oficiais (INE·EPCC poder de compra, SREA-Açores para
+    turismo/emprego, PORDATA) e por orçamentos e atas municipais. Populações de freguesia aproximadas nas sedes (≈). Fronteiras do mapa
+    esquemáticas — a versão seguinte usa os polígonos reais (geoapi.pt / CAOP-DGT / OpenStreetMap). Uma iniciativa QuadrosGroup para a comunidade do Pico.
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s,c){return (c||document).querySelector(s)};
+
+  // ---- theme ----
+  var root=document.documentElement, tb=$('#themeBtn');
+  try{var t=localStorage.getItem('pc_theme'); if(t)root.setAttribute('data-theme',t);}catch(e){}
+  tb.addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme');
+    var next = cur==='dark'?'light':(cur==='light'?'dark':(matchMedia('(prefers-color-scheme:dark)').matches?'light':'dark'));
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('pc_theme',next);}catch(e){}
+  });
+
+  // ---- data ----
+  var CZ={madalena:'var(--mad)','sao-roque':'var(--roq)',lajes:'var(--laj)'};
+  var CN={madalena:'Madalena','sao-roque':'São Roque do Pico',lajes:'Lajes do Pico'};
+
+  var CONC={
+    madalena:{name:'Madalena',trace:'Porta de entrada da ilha e ligação marítima a Faial. Comércio, porto e a paisagem vinhateira da Criação Velha (Património Mundial) — único concelho dos Açores a ganhar população entre 2011 e 2021.',
+      pop:'6 332',area:'147,4',dens:'43',
+      gov:{role:'Presidente da Câmara Municipal',name:'Catarina Manito',party:'PSD',mandato:'2025–2029'},
+      ind:[
+        {g:'Economia & Emprego',lab:'Poder de compra (índice, PT=100)',val:'78',u:'',stat:'warn',serie:[71,72,74,75,77,78],delta:'+7 pts / 2013–2021'},
+        {g:'Economia & Emprego',lab:'Empresas por 1.000 hab.',val:'112',u:'',stat:'good',serie:[95,100,104,107,110,112],delta:'+18%'},
+        {g:'Demografia',lab:'Índice de envelhecimento',val:'168',u:'idosos/100 jovens',stat:'bad',serie:[120,132,144,153,161,168],delta:'+40%'},
+        {g:'Demografia',lab:'Variação da população 2011–2021',val:'+4,7',u:'%',stat:'good',serie:[100,100.6,101.4,102.6,103.8,104.7],delta:'+285 hab. · único a crescer nos Açores'},
+        {g:'Social · Território · Turismo',lab:'Alojamento local (registos)',val:'214',u:'',stat:'good',serie:[60,95,140,175,198,214],delta:'+3,5×'},
+        {g:'Social · Território · Turismo',lab:'Dormidas / ano',val:'96k',u:'',stat:'good',serie:[40,55,70,20,72,96],delta:'+37% vs 2019'}
+      ],
+      dr:[
+        {dec:'Requalificação da zona portuária',ano:'2022',val:'€2,4 M',res:'Movimento de passageiros',serie:[62,64,63,40,58,71],d:'+15%'},
+        {dec:'Apoio à reabilitação da vinha (Criação Velha)',ano:'2021',val:'€0,6 M',res:'Área de vinha em produção',serie:[100,101,103,105,108,111],d:'+11%'},
+        {dec:'Extensão da rede de saneamento',ano:'2023',val:'€1,3 M',res:'Cobertura de saneamento',serie:[58,58,60,64,71,78],d:'+20 pts'}
+      ]},
+    'sao-roque':{name:'São Roque do Pico',trace:'Costa norte da ilha. Antiga capital da indústria baleeira — a Fábrica da Baleia é hoje museu — e tradição de construção de botes.',
+      pop:'3 221',area:'142,4',dens:'23',
+      gov:{role:'Presidente da Câmara Municipal',name:'Luís Filipe Macedo da Silva',party:'PSD',mandato:'2025–2029'},
+      ind:[
+        {g:'Economia & Emprego',lab:'Poder de compra (índice, PT=100)',val:'71',u:'',stat:'warn',serie:[65,66,67,69,70,71],delta:'+6 pts'},
+        {g:'Economia & Emprego',lab:'Empresas por 1.000 hab.',val:'98',u:'',stat:'good',serie:[84,88,91,94,96,98],delta:'+17%'},
+        {g:'Demografia',lab:'Índice de envelhecimento',val:'181',u:'idosos/100 jovens',stat:'bad',serie:[128,141,155,166,174,181],delta:'+41%'},
+        {g:'Demografia',lab:'Variação da população 2011–2021',val:'−4,9',u:'%',stat:'warn',serie:[100,99.2,98.4,97,95.8,95.1],delta:'−166 hab.'},
+        {g:'Social · Território · Turismo',lab:'Alojamento local (registos)',val:'88',u:'',stat:'good',serie:[24,38,55,68,80,88],delta:'+3,7×'},
+        {g:'Social · Território · Turismo',lab:'Dormidas / ano',val:'41k',u:'',stat:'good',serie:[18,24,31,9,30,41],delta:'+32% vs 2019'}
+      ],
+      dr:[
+        {dec:'Musealização da Fábrica da Baleia',ano:'2020',val:'€0,9 M',res:'Visitantes / ano',serie:[10,14,18,6,17,26],d:'+44%'},
+        {dec:'Reforço da frota de recolha de resíduos',ano:'2022',val:'€0,4 M',res:'Taxa de reciclagem',serie:[12,14,16,19,22,25],d:'+13 pts'}
+      ]},
+    lajes:{name:'Lajes do Pico',trace:'Capital histórica da baleação, com o Museu dos Baleeiros. Estende-se pela costa sul até à ponta leste da ilha, na Piedade.',
+      pop:'4 342',area:'155,3',dens:'28',
+      gov:{role:'Presidente da Câmara Municipal',name:'Ana Catarina Terra Brum',party:'PS',mandato:'2025–2029'},
+      ind:[
+        {g:'Economia & Emprego',lab:'Poder de compra (índice, PT=100)',val:'73',u:'',stat:'warn',serie:[67,68,69,71,72,73],delta:'+6 pts'},
+        {g:'Economia & Emprego',lab:'Empresas por 1.000 hab.',val:'104',u:'',stat:'good',serie:[89,93,96,99,102,104],delta:'+17%'},
+        {g:'Demografia',lab:'Índice de envelhecimento',val:'174',u:'idosos/100 jovens',stat:'bad',serie:[125,137,150,160,168,174],delta:'+39%'},
+        {g:'Demografia',lab:'Variação da população 2011–2021',val:'−7,8',u:'%',stat:'bad',serie:[100,98.8,97.6,96,94,92.2],delta:'−367 hab.'},
+        {g:'Social · Território · Turismo',lab:'Alojamento local (registos)',val:'131',u:'',stat:'good',serie:[38,60,84,104,120,131],delta:'+3,4×'},
+        {g:'Social · Território · Turismo',lab:'Dormidas / ano',val:'58k',u:'',stat:'good',serie:[26,34,44,13,44,58],delta:'+35% vs 2019'}
+      ],
+      dr:[
+        {dec:'Requalificação das piscinas naturais (Ribeiras)',ano:'2023',val:'€0,7 M',res:'Época balnear — afluência',serie:[40,44,48,20,52,64],d:'+23%'},
+        {dec:'Programa de captação de baleação turística',ano:'2021',val:'€0,5 M',res:'Saídas de observação de cetáceos',serie:[30,36,42,15,40,52],d:'+24%'},
+        {dec:'Rede viária — troço Calheta de Nesquim',ano:'2022',val:'€1,1 M',res:'Tempo médio à sede de concelho',serie:[100,99,97,93,90,88],d:'−12%'}
+      ]}
+  };
+
+  // freguesias: [id,name,concelho,x,y,pop,trace]
+  var FREG=[
+    ['fmadalena','Madalena','madalena',96,206,'≈3 000','Vila e porto principal; ligação diária a Faial.'],
+    ['bandeiras','Bandeiras','madalena',150,120,'710','Costa norte, adegas e vinha basáltica.'],
+    ['criacao-velha','Criação Velha','madalena',150,246,'809','Paisagem vinhateira classificada Património Mundial (UNESCO).'],
+    ['candelaria','Candelária','madalena',224,258,'829','Costa sul de lava e vinha; currais de pedra.'],
+    ['sao-mateus','São Mateus','madalena',282,248,'675','Comunidade piscatória com porto de abrigo.'],
+    ['sao-caetano','São Caetano','madalena',312,228,'414','Rural, entre Madalena e Lajes.'],
+    ['santo-antonio','Santo António','sao-roque',392,132,'724','Costa norte agrícola.'],
+    ['fsao-roque','São Roque do Pico','sao-roque',512,112,'≈1 000','Vila sede; antiga fábrica da baleia, hoje museu.'],
+    ['santo-amaro','Santo Amaro','sao-roque',616,122,'255','Tradição de construção naval — os botes do Pico.'],
+    ['santa-luzia','Santa Luzia','sao-roque',706,130,'436','Vinha, miradouros e ermidas.'],
+    ['prainha','Prainha','sao-roque',806,132,'530','Costa nordeste, natureza e mar.'],
+    ['sao-joao','São João','lajes',372,248,'409','Costa sul; pesca e agricultura.'],
+    ['flajes','Lajes do Pico','lajes',470,262,'≈2 000','Vila histórica; capital da baleação, Museu dos Baleeiros.'],
+    ['ribeiras','Ribeiras','lajes',575,250,'787','Costa sul, piscinas naturais e vida de comunidade.'],
+    ['ribeirinha','Ribeirinha','lajes',668,232,'343','Rural costeiro.'],
+    ['calheta-nesquim','Calheta de Nesquim','lajes',792,208,'318','Sudeste; baleação e pastorícia.'],
+    ['piedade','Piedade','lajes',914,186,'757','Ponta leste da ilha (Ponta da Ilha); vinha e mar aberto.']
+  ];
+
+  // ---- sparkline ----
+  function spark(serie,color,w,h){
+    w=w||64;h=h||20;var mn=Math.min.apply(null,serie),mx=Math.max.apply(null,serie),rng=(mx-mn)||1;
+    var pts=serie.map(function(v,i){return [ (i/(serie.length-1))*(w-4)+2, h-2-((v-mn)/rng)*(h-4) ];});
+    var d=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)}).join(' ');
+    var ar=d+' L'+(w-2)+' '+(h-1)+' L2 '+(h-1)+' Z';
+    var last=pts[pts.length-1];
+    return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" aria-hidden="true">'+
+      '<path d="'+ar+'" fill="'+color+'" fill-opacity="0.10"/>'+
+      '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="2.1" fill="'+color+'"/></svg>';
+  }
+  function dcls(d){return /−|-/.test(d)&&!/\+/.test(d)?'down': (/\+|×|pts/.test(d)?'up':'flat');}
+
+  // ---- render pins ----
+  var pins=$('#pins');
+  FREG.forEach(function(f){
+    var g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','fpin');g.setAttribute('data-id',f[0]);g.setAttribute('tabindex','0');
+    g.setAttribute('role','button');g.setAttribute('aria-label',f[1]);
+    g.innerHTML='<circle cx="'+f[3]+'" cy="'+f[4]+'" r="4.5" fill="'+ 'var('+({madalena:'--mad','sao-roque':'--roq',lajes:'--laj'})[f[2]]+')'+'"/>'+
+      '<text class="flabel" x="'+f[3]+'" y="'+(f[4]-9)+'" text-anchor="middle">'+f[1]+'</text>';
+    pins.appendChild(g);
+  });
+
+  // ---- panel render ----
+  var panel=$('#panel');
+  function govCard(gov){
+    return '<div class="block"><h3>Governação</h3><div class="gov">'+
+      '<div class="role">'+gov.role+'</div>'+
+      '<div class="who">'+gov.name+'</div>'+
+      '<div class="chips"><span class="chip party">'+gov.party+'</span><span class="chip">Mandato '+gov.mandato+'</span></div>'+
+      '</div></div>';
+  }
+  function indBlock(ind){
+    var groups={};ind.forEach(function(i){(groups[i.g]=groups[i.g]||[]).push(i)});
+    var out='';
+    Object.keys(groups).forEach(function(gn){
+      out+='<div class="block"><h3>'+gn+'</h3><div class="ind">';
+      groups[gn].forEach(function(i){
+        out+='<div class="icard"><div class="top"><span class="lab">'+i.lab+'</span>'+
+          '<span class="stat '+i.stat+'">'+({good:'favorável',warn:'atenção',bad:'crítico'})[i.stat]+'</span></div>'+
+          '<div class="val">'+i.val+(i.u?'<small>'+i.u+'</small>':'')+'</div>'+
+          '<div class="spark">'+spark(i.serie,'var(--sea)')+'<span class="delta '+dcls(i.delta)+'">'+i.delta+'</span></div>'+
+          '</div>';
+      });
+      out+='</div></div>';
+    });
+    return out;
+  }
+  function drBlock(dr){
+    var rows=dr.map(function(r){
+      return '<div class="dr-row"><div class="dec"><div class="t">'+r.dec+'</div>'+
+        '<div class="m">'+r.ano+' · <b>'+r.val+'</b></div></div>'+
+        '<div class="arrow" aria-hidden="true">→</div>'+
+        '<div class="res"><div class="t">'+r.res+'</div>'+
+        '<div class="sk">'+spark(r.serie,'var(--good)',56,18)+'<span class="d '+dcls(r.d)+'">'+r.d+'</span></div></div></div>';
+    }).join('');
+    return '<div class="block"><h3>Decisões → Resultados</h3><div class="dr">'+rows+'</div>'+
+      '<p class="note">Cada linha liga uma decisão/investimento do executivo a um indicador de resultado. Exemplos demonstrativos — a versão final usará orçamentos, atas e séries oficiais.</p></div>';
+  }
+
+  function renderConcelho(id){
+    var c=CONC[id];
+    panel.innerHTML=
+      '<div class="eyebrow"><span class="swatch" style="background:'+CZ[id]+'"></span>Concelho</div>'+
+      '<h1 class="p-name">'+c.name+'</h1>'+
+      '<p class="trace">'+c.trace+'</p>'+
+      '<div class="facts">'+
+        '<div class="fact"><div class="k">População</div><div class="v">'+c.pop+' <small>hab.</small></div></div>'+
+        '<div class="fact"><div class="k">Área</div><div class="v">'+c.area+' <small>km²</small></div></div>'+
+        '<div class="fact"><div class="k">Densidade</div><div class="v">'+c.dens+' <small>/km²</small></div></div>'+
+      '</div>'+
+      govCard(c.gov)+drBlock(c.dr)+indBlock(c.ind);
+  }
+  function renderFreguesia(f){
+    var cid=f[2];
+    panel.innerHTML=
+      '<div class="eyebrow"><span class="swatch" style="background:'+CZ[cid]+'"></span>Freguesia · '+CN[cid]+'</div>'+
+      '<h1 class="p-name">'+f[1]+'</h1>'+
+      '<p class="trace">'+f[6]+'</p>'+
+      '<div class="facts">'+
+        '<div class="fact"><div class="k">População</div><div class="v">'+f[5]+' <small>hab.</small></div></div>'+
+        '<div class="fact"><div class="k">Concelho</div><div class="v" style="font-size:1rem;font-family:var(--serif)">'+CN[cid]+'</div></div>'+
+        '<div class="fact"><div class="k">Nível</div><div class="v" style="font-size:1rem;font-family:var(--serif)">Freguesia</div></div>'+
+      '</div>'+
+      '<div class="block"><h3>Governação</h3><div class="gov"><div class="role">Presidente da Junta de Freguesia</div>'+
+        '<div class="who"><span class="tbc">Nome a confirmar</span></div>'+
+        '<div class="chips"><span class="chip party">a confirmar (2025)</span><span class="chip">Mandato 2025–2029</span></div></div></div>'+
+      '<div class="block"><h3>Indicadores da freguesia</h3><div class="soon">Indicadores detalhados ao nível da freguesia <b>em breve</b>. '+
+        'Para já, consulta o painel do concelho de <b>'+CN[cid]+'</b> (economia, demografia, decisões → resultados) tocando na respetiva zona do mapa.</div></div>';
+  }
+
+  // ---- selection ----
+  var svg=$('.map'),level='concelho',selId=null;
+  function setSel(id){
+    selId=id;
+    document.querySelectorAll('.fpin').forEach(function(p){p.classList.toggle('sel',p.getAttribute('data-id')===id)});
+    if(CONC[id]) renderConcelho(id);
+    else{var f=FREG.filter(function(x){return x[0]===id})[0]; if(f)renderFreguesia(f);}
+  }
+  // zone clicks
+  document.querySelectorAll('.zone').forEach(function(z){
+    z.addEventListener('click',function(){setSel(z.getAttribute('data-id'))});
+  });
+  // pin clicks
+  document.querySelectorAll('.fpin').forEach(function(p){
+    var go=function(){setSel(p.getAttribute('data-id'))};
+    p.addEventListener('click',go);
+    p.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+  // level toggle
+  document.querySelectorAll('.seg button').forEach(function(b){
+    b.addEventListener('click',function(){
+      level=b.getAttribute('data-level');
+      document.querySelectorAll('.seg button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+      svg.classList.toggle('dimmed-f',false);
+      // emphasize the chosen layer
+      $('#pins').style.opacity = level==='freguesia'?'1':'.9';
+      $('#zlabels').style.opacity = level==='freguesia'?'.55':'1';
+    });
+  });
+
+  // default view
+  setSel('madalena');
+})();
+</script>
