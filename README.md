@@ -21,6 +21,11 @@ que muda**. Inspiração de referência: [analisa.pt](https://analisa.pt).
 - **Contratos Públicos** — 2021–2026 (base.gov.pt): série anual, maiores fornecedores,
   **Sinais** forenses (ajuste direto, concentração/HHI, ascensões, clustering), Rede
   cross-concelho e tabela pesquisável.
+- **Influência** — *peso público documentado*, não popularidade. Por titular de cargo:
+  assiduidade, voto nominal, dissidência face à própria bancada e **pivotalidade** (em
+  quantas maiorias a sua bancada foi decisiva). Por empresa: quota na despesa do concelho,
+  persistência, amplitude. E **apoio eleitoral por freguesia** (DGAI) — a única medida de
+  apoio popular com denominador válido. Sobre pessoas privadas não se pontua nada.
 - **Finanças** — dívida, endividamento, prazo de pagamento (DGAL).
 
 ## Fontes de dados
