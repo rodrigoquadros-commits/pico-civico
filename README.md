@@ -13,8 +13,11 @@ que muda**. Inspiração de referência: [analisa.pt](https://analisa.pt).
   Segurança/Justiça, Ambiente, Cultura, Território, Governação/Finanças. Cada indicador com
   ano, fonte e fiabilidade.
 - **Governação** — presidente + executivo (mandatos por partido), câmara/assembleia.
-- **Assembleia** — sessões, presenças e **sentido de voto por bancada**, extraídos das atas
-  por OCR (dados que não existem estruturados a nível municipal).
+- **Assembleia** — **8 mandatos, 1998–2026**: cobertura do acervo, presenças por membro,
+  **sentido de voto por membro e por bancada**, sessões com as respetivas deliberações e
+  ligação à ata em PDF. Extraído por OCR das atas — dados que não existem estruturados a
+  nível municipal em Portugal. O voto nominal só é registado nas atas a partir do mandato
+  2013–2017; a plataforma mostra essa fronteira em vez de a esconder.
 - **Contratos Públicos** — 2021–2026 (base.gov.pt): série anual, maiores fornecedores,
   **Sinais** forenses (ajuste direto, concentração/HHI, ascensões, clustering), Rede
   cross-concelho e tabela pesquisável.
@@ -22,14 +25,21 @@ que muda**. Inspiração de referência: [analisa.pt](https://analisa.pt).
 
 ## Fontes de dados
 Censos 2021 (INE via geoapi.pt) · INE API `pindica.jsp` · SREA-Açores · DGAL (AIQGP,
-dados.gov.pt) · Portal BASE / IMPIC (contratação) · atas municipais (OCR).
+dados.gov.pt) · Portal BASE / IMPIC (contratação) · atas municipais (OCR, 110 atas da
+Assembleia de 1998 a 2026).
+
+Nada sobre titulares de cargos vai além do exercício público do mandato — presenças,
+deliberações e sentido de voto. Os dados pessoais que as atas de instalação contêm
+(Cartão de Cidadão, morada, idade, estado civil, profissão) são descartados na ingestão
+e nunca chegam à plataforma.
 
 ## Motor de ingestão
 Ver o repositório **`lajes-acervo`** — conectores (geoapi, INE), ingestão de atas + OCR,
 extração da Assembleia, e catálogo de indicadores. A plataforma consome o que esse pipeline produz.
 
 ## Estado
-Molde concebido e completo para **Lajes do Pico**; replicar aos outros concelhos é
-trocar o município. Valores marcados por fiabilidade; nada é apresentado como facto sem fonte.
+Molde concebido e completo para **Lajes do Pico**. Madalena e São Roque do Pico já têm
+Contratos e Finanças; faltam-lhes os Indicadores por área e a Assembleia. Valores marcados
+por fiabilidade; nada é apresentado como facto sem fonte.
 
 Uma iniciativa QuadrosGroup para a comunidade do Pico.
