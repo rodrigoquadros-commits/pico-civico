@@ -47,4 +47,11 @@ Molde concebido e completo para **Lajes do Pico**. Madalena e São Roque do Pico
 Contratos e Finanças; faltam-lhes os Indicadores por área e a Assembleia. Valores marcados
 por fiabilidade; nada é apresentado como facto sem fonte.
 
+## Handoff técnico
+
+`HANDOFF.md` é um levantamento rigoroso do estado do sistema — arquitetura, esquema das 12
+tabelas, fontes com as suas lacunas, o que é IA (nada) e o que é expressão regular, dívida
+técnica medida, e o que falta para suportar um módulo de Social Intelligence. Escrito para
+ser entregue a quem venha desenhar o próximo módulo sem destruir nem duplicar o que existe.
+
 Uma iniciativa QuadrosGroup para a comunidade do Pico.
